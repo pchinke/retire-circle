@@ -16,6 +16,17 @@ jobs:
       - run: |
           pip install -r requirements.txt
           python manage.py test taskManager
+    
+  oast-frontend:
+    machine: true
+    steps:
+      - checkout
+
+      - run: docker run --rm -v $(pwd):/src -w /src hysnsec/retire --outputformat json --outputpath retirejs-output.json --severity high
+
+      - store_artifacts:
+          path: retirejs-output.json
+          destination: retirejs-artifact
 
   integration:
     docker:
@@ -42,9 +53,12 @@ workflows:
       - test:
           requires:
             - build 
+      - oast-frontend:
+          requires:
+             - test
       - integration:
           requires:
-            - test
+            - oast-frontend
       - prod:
           type: approval
           requires:
